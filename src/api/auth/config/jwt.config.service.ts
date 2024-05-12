@@ -6,6 +6,11 @@ import { JwtModuleOptions, JwtOptionsFactory } from '@nestjs/jwt';
 export class JwtConfigService implements JwtOptionsFactory {
   constructor(private readonly configService: ConfigService) {}
 
+  /**
+   * JWT의 설정을 불러옵니다.
+   *
+   * @returns 불러온 설정을 리턴합니다.
+   */
   createJwtOptions(): JwtModuleOptions | Promise<JwtModuleOptions> {
     return {
       secret: this.configService.get<string>('JWT_SECRET'),

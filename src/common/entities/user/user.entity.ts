@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -8,6 +9,7 @@ import {
 import { Alert } from '../alert/alert.entity';
 import { Evaluation } from '../evaluation/evaluation.entity';
 import { Library } from '../library/library.entity';
+import { Developer } from '../developer/developer.entity';
 
 @Entity()
 export class User {
@@ -34,6 +36,9 @@ export class User {
 
   @Column({ nullable: true })
   currentRefreshTokenExp: Date;
+
+  @ManyToMany(() => Developer, (developer) => developer.users)
+  developer: Developer[];
 
   @OneToMany(() => Alert, (alert) => alert.user)
   alert: Alert[];

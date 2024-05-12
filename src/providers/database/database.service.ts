@@ -12,7 +12,7 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
     return {
       //데이터베이스 설정
       type: 'postgres',
-      name: this.configService.get<string>('DATABASE_NAME'),
+      database: this.configService.get<string>('DATABASE_NAME'),
       host: this.configService.get<string>('DATABASE_URL'),
       username: this.configService.get<string>('DATABASE_USER'),
       password: this.configService.get<string>('DATABASE_PASSWORD'),

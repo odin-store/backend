@@ -1,4 +1,11 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { User } from '../user/user.entity';
 
 @Entity()
 export class Developer {
@@ -6,5 +13,17 @@ export class Developer {
   id: number;
 
   @Column()
-  nickname: string;
+  name: string;
+
+  @Column()
+  description: string;
+
+  @Column({ nullable: true })
+  profile: string;
+
+  @Column({ nullable: true })
+  banner: string;
+
+  @ManyToMany(() => User, (user) => user.developer)
+  users: User[];
 }

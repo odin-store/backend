@@ -1,33 +1,70 @@
-import { ConflictException, Injectable, Logger, flatten } from '@nestjs/common';
-import { GameGenerateDto } from 'src/common/dto/games/generate.dto';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { Game } from 'src/common/entities/game/game.entity';
 import { Genre } from 'src/common/entities/game/genre.entity';
 import { DataSource } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Readable } from 'stream';
 
 @Injectable()
 export class GameService {
   private readonly logger = new Logger(GameService.name);
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly configService: ConfigService,
+  ) {}
 
-  //generate new game
-  async generate(generateDto: GameGenerateDto) {
-    const gameRepository = this.dataSource.getRepository(Game);
+  async getDownloadURL(id: string) {
+    const accessKeyId = this.configService.get('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get('AWS_SECRET_ACCESS_KEY');
+    const bucket = this.configService.get('AWS_CLOUD_BUCKET');
 
-    this.logger.log(`Generating new game : ${generateDto.title}`);
-
-    const newGame = gameRepository.create({
-      title: generateDto.title,
-      description: generateDto.description,
-      price: generateDto.price,
-      star_rates: 0,
-      star_rates_count: 0,
-      is_judging: true,
-      is_public: false,
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: `${id}.zip`,
     });
 
-    gameRepository.save(newGame);
+    const client = new S3Client({
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
+      region: 'ap-northeast-2',
+    });
 
-    return newGame;
+    const url = await getSignedUrl(client, command, {
+      expiresIn: 24 * 60 * 60,
+    });
+
+    return url;
+  }
+
+  async streamFileFromS3(id: string) {
+    const accessKeyId = this.configService.get('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get('AWS_SECRET_ACCESS_KEY');
+    const bucket = this.configService.get('AWS_CLOUD_BUCKET');
+
+    const client = new S3Client({
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
+      region: 'ap-northeast-2',
+    });
+
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: `${id}.zip`,
+    });
+
+    const { Body } = await client.send(command);
+
+    if (Body instanceof Readable) {
+      return Body;
+    } else {
+      throw new Error('Failed to get a readable stream');
+    }
   }
 
   //generate new genres

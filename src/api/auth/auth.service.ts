@@ -25,12 +25,16 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  //Register new user
+  /**
+   * 회원가입을 진행합니다.
+   * @param registerDto 회원가입에 필요한 정보들이 요구됩니다.
+   * @returns 회원가입의 결과를 리턴합니다.
+   */
   async registerUser(registerDto: RegisterDto) {
     const userRepository = this.dataSource.getRepository(User);
     const verifyRepository = this.dataSource.getRepository(EmailCert);
 
-    //throw error if email is not verified
+    //이메일이 검증되었는지 확인합니다.
     const findEmail = await verifyRepository.findOneBy({
       email: registerDto.email,
     });
@@ -39,7 +43,7 @@ export class AuthService {
       throw new UnauthorizedException('Email not verified');
     }
 
-    //throw unauthorizedException if there is an user that use requested email
+    //이미 해당 이메일로 가입된 유저가 있는지 확인합니다.
     let foundUser = await userRepository.findOneBy({
       email: registerDto.email,
     });
@@ -68,7 +72,11 @@ export class AuthService {
     };
   }
 
-  //check email usage
+  /**
+   * 이메일 사용 여부를 확인합니다.
+   * @param email 확인할 이메일 주소입니다.
+   * @returns 이메일 사용 여부를 리턴합니다.
+   */
   async checkEmail(email: string) {
     const userRepository = this.dataSource.getRepository(User);
 
@@ -87,6 +95,11 @@ export class AuthService {
     }
   }
 
+  /**
+   * ID를 사용하여 사용자를 가져옵니다.
+   * @param userId 사용자의 ID입니다.
+   * @returns 사용자 정보를 리턴합니다.
+   */
   async getUserWithId(userId: number) {
     const userRepository = this.dataSource.getRepository(User);
     const user = await userRepository.findOneBy({
@@ -96,21 +109,25 @@ export class AuthService {
     return user;
   }
 
-  //validate user
+  /**
+   * 사용자를 검증합니다.
+   * @param loginDto 로그인 정보입니다.
+   * @returns 검증된 사용자 정보를 리턴합니다.
+   */
   async validateUser(loginDto: LoginDto) {
     const userRepository = this.dataSource.getRepository(User);
 
-    //find user with email
+    //이메일로 사용자를 찾습니다.
     let foundUser = await userRepository.findOneBy({
       email: loginDto.email,
     });
 
-    //return error if no user with email
+    //이메일로 사용자를 찾지 못한 경우 에러를 반환합니다.
     if (!foundUser) {
       throw new UnauthorizedException("Couldn't find user with email");
     }
 
-    //compare password
+    //비밀번호를 비교합니다.
     const validatepassword = await bcrypt.compare(
       loginDto.password,
       foundUser.password,
@@ -123,7 +140,11 @@ export class AuthService {
     return foundUser;
   }
 
-  //generate new access token
+  /**
+   * 사용자 정보를 기반으로 새로운 액세스 토큰을 생성합니다.
+   * @param user 사용자 엔티티입니다.
+   * @returns 생성된 액세스 토큰을 문자열로 반환합니다.
+   */
   async generateAccessToken(user: User): Promise<string> {
     const payload: payload = {
       id: user.id,
@@ -135,7 +156,11 @@ export class AuthService {
     return this.jwtService.signAsync(payload);
   }
 
-  //generate new refresh token
+  /**
+   * 사용자 정보를 기반으로 새로운 리프레시 토큰을 생성합니다.
+   * @param user 사용자 엔티티입니다.
+   * @returns 생성된 리프레시 토큰을 문자열로 반환합니다.
+   */
   async generateRefreshToken(user: User): Promise<string> {
     const payload: payload = {
       id: user.id,
@@ -156,7 +181,11 @@ export class AuthService {
     );
   }
 
-  //hash refresh token
+  /**
+   * 리프레시 토큰을 해시 처리합니다.
+   * @param refreshToken 해시 처리할 리프레시 토큰입니다.
+   * @returns 해시 처리된 리프레시 토큰을 반환합니다.
+   */
   async getHashedRefreshToken(refreshToken: string) {
     const slatOrRounds = 10;
     const currentRefreshToken = await bcrypt.hash(refreshToken, slatOrRounds);
@@ -165,7 +194,10 @@ export class AuthService {
     return currentRefreshToken;
   }
 
-  //get expire date of refresh token
+  /**
+   * 현재 리프레시 토큰의 만료 날짜를 가져옵니다.
+   * @returns 리프레시 토큰의 만료 날짜를 반환합니다.
+   */
   async getCurrentRefreshTokenExp(): Promise<Date> {
     const currentDate = new Date();
     const currentRefreshTokenExp = new Date(
@@ -176,7 +208,11 @@ export class AuthService {
     return currentRefreshTokenExp;
   }
 
-  //set current refresh token
+  /**
+   * 사용자 ID에 현재 리프레시 토큰을 설정합니다.
+   * @param refreshToken 설정할 리프레시 토큰입니다.
+   * @param userId 사용자의 ID입니다.
+   */
   async setCurrentRefreshToken(refreshToken: string, userId: number) {
     const userRepository = this.dataSource.getRepository(User);
 
@@ -190,7 +226,11 @@ export class AuthService {
     this.logger.log(`Refresh token saved for user ${userId}`);
   }
 
-  //validate token for user
+  /**
+   * 페이로드를 기반으로 사용자 토큰을 검증합니다.
+   * @param payload 검증할 사용자의 페이로드입니다.
+   * @returns 검증된 사용자 엔티티를 반환하거나, undefined를 반환합니다.
+   */
   async validateUserToken(payload: payload): Promise<User | undefined> {
     const userRepository = this.dataSource.getRepository(User);
 
@@ -201,7 +241,12 @@ export class AuthService {
     return user;
   }
 
-  //get user that have current refresh token
+  /**
+   * 현재 리프레시 토큰을 가진 사용자를 가져옵니다.
+   * @param refreshToken 검증할 리프레시 토큰입니다.
+   * @param userId 사용자의 ID입니다.
+   * @returns 리프레시 토큰이 일치하는 사용자 엔티티를 반환합니다.
+   */
   async getUserWithCurentRefreshToken(
     refreshToken: string,
     userId: number,
@@ -227,7 +272,11 @@ export class AuthService {
     return user;
   }
 
-  //refresh user token
+  /**
+   * 리프레시 토큰을 사용하여 사용자 토큰을 새로고침합니다.
+   * @param refreshDto 리프레시 토큰 정보가 담긴 DTO입니다.
+   * @returns 새로운 액세스 토큰을 반환합니다.
+   */
   async refresh(refreshDto: RefreshTokenDto) {
     const { refreshToken } = refreshDto;
 
@@ -255,7 +304,10 @@ export class AuthService {
     return { accessToken };
   }
 
-  //remove user's refresh token
+  /**
+   * 사용자의 리프레시 토큰을 제거합니다.
+   * @param userId 리프레시 토큰을 제거할 사용자의 ID입니다.
+   */
   async removeRefreshToken(userId: number): Promise<any> {
     const userRepository = this.dataSource.getRepository(User);
 

@@ -16,6 +16,7 @@ import { GameRate } from './rate.entity';
 import { Evaluation } from '../evaluation/evaluation.entity';
 import { Languages } from '../countries/languages.entity';
 import { GameSales } from '../events/sales.entity';
+import { GameVersion } from './version.entity';
 
 @Entity()
 export class Game {
@@ -45,6 +46,15 @@ export class Game {
 
   @Column()
   is_judging: boolean;
+
+  @Column()
+  file: string;
+
+  @Column()
+  version: string;
+
+  @ManyToOne(() => GameVersion, (version) => version.game)
+  versions: GameVersion;
 
   @ManyToMany(() => Genre, (genre) => genre.games)
   genres: Genre[];

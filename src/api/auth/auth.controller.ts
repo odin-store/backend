@@ -12,7 +12,6 @@ import { AuthService } from './auth.service';
 import RegisterDto from 'src/common/dto/auth/register.dto';
 import LoginDto from 'src/common/dto/auth/login.dto';
 import { Request, Response } from 'express';
-import { JwtRefreshGuard } from './guards/refresh.guards';
 import { AuthGuard } from './guards/auth.guards';
 
 @Controller('auth')
@@ -36,9 +35,6 @@ export class AuthController {
 
     //set refresh token
     await this.authService.setCurrentRefreshToken(refresh_token, user.id);
-
-    //get user data
-    const userData = await this.authService.getUserWithId(user.id);
 
     //set token on cookie
     res.setHeader('Authorization', 'Bearer ' + [access_token, refresh_token]);

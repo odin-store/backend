@@ -8,6 +8,8 @@ import { DatabaseConfigService } from './providers/database/database.service';
 import { MailModule } from './api/mail/mail.module';
 import { GameModule } from './api/game/game.module';
 import { DevelopersModule } from './api/developers/developers.module';
+import { LibraryModule } from './api/library/library.module';
+import { PurchaseModule } from './api/purchase/purchase.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { DevelopersModule } from './api/developers/developers.module';
     MailModule,
     GameModule,
     DevelopersModule,
+    LibraryModule,
+    PurchaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
